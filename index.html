@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="pl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Indeksowe Karaoke</title>
+    <!-- FIREBASE SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
         /* ZMIENNE KOLORÓW DLA TRYBU CIEMNEGO I JASNEGO */
         :root {
@@ -34,572 +38,818 @@
             --item-hover: #f1f1f1;
         }
 
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; transition: background-color 0.3s, color 0.3s, padding 0.3s; font-size: 16px; }
-        .container { background-color: var(--container-bg); padding: 30px 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 20px; position: relative; transition: background-color 0.3s, border-radius 0.3s, margin 0.3s; border: 1px solid var(--border-color); }
-        
-        /* Zmniejszone czcionki nagłówka i harmonogramu */
-        h1 { text-align: center; color: var(--primary); margin: 0 0 5px 0; font-size: 24px; transition: color 0.3s; }
-        .schedule { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 5px; line-height: 1.5; transition: color 0.3s; }
-        
-        .top-controls { display: flex; justify-content: space-between; align-items: center; position: relative; margin-bottom: -10px; }
-        .lang-toggle { display: flex; justify-content: center; background: var(--input-bg); border-radius: 20px; padding: 4px; border: 1px solid var(--border-color); transition: background 0.3s, border 0.3s; margin: 0 auto; }
-        .lang-btn { background: transparent; border: none; color: var(--text-muted); font-weight: bold; font-size: 15px; padding: 8px 18px; border-radius: 16px; cursor: pointer; transition: 0.3s; margin: 0; }
-        .lang-btn.active { background: var(--primary); color: var(--btn-text); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            transition: 0.3s;
+            font-size: 16px;
+        }
 
-        .theme-toggle { background: transparent; border: none; font-size: 24px; cursor: pointer; padding: 0; margin: 0; position: absolute; right: 0; transition: transform 0.2s; }
-        .theme-toggle:active { transform: scale(0.9); }
+        .container {
+            background-color: var(--container-bg);
+            padding: 30px 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            transition: 0.3s;
+            border: 1px solid var(--border-color);
+        }
 
-        label { font-size: 16px; color: var(--text-muted); margin-bottom: 8px; display: block; font-weight: bold; transition: color 0.3s; }
-        input[type="text"] { width: 100%; padding: 16px; background: var(--input-bg); border: 2px solid var(--border-color); color: var(--text-main); border-radius: 8px; font-size: 18px; box-sizing: border-box; outline: none; transition: border-color 0.2s, background 0.3s, color 0.3s; }
-        input[type="text"]:focus { border-color: var(--primary); }
-        
-        .input-group { position: relative; display: flex; flex-direction: column;}
-        
-        /* --- WYGLĄD LISTY PODPOWIEDZI --- */
-        .suggestions-box { 
-            background: var(--container-bg); border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); 
-            max-height: 60vh; overflow-y: auto; display: none; margin-top: 8px; border: 1px solid var(--border-color); 
-            transition: background 0.3s, border 0.3s;
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            transition: color 0.3s;
         }
-        
-        .suggestion-item { 
-            padding: 16px 15px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; 
-            cursor: pointer; font-size: 18px; color: var(--text-main); transition: background 0.2s, color 0.3s;
+
+        .schedule {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 5px;
+            line-height: 1.5;
+            transition: color 0.3s;
         }
-        .suggestion-item:hover, .suggestion-item:active { background: var(--item-hover); }
-        
-        .yt-suggestion-item { 
-            padding: 12px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px;
-            cursor: pointer; transition: background 0.2s;
+
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            margin-bottom: -10px;
         }
-        .yt-suggestion-item:hover, .yt-suggestion-item:active { background: var(--item-hover); }
-        .yt-suggestion-item:last-child { border-bottom: none; }
-        
+
+        .lang-toggle {
+            display: flex;
+            justify-content: center;
+            background: var(--input-bg);
+            border-radius: 20px;
+            padding: 4px;
+            border: 1px solid var(--border-color);
+            transition: 0.3s;
+            margin: 0 auto;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: bold;
+            font-size: 15px;
+            padding: 8px 18px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 0;
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: var(--btn-text);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            margin: 0;
+            position: absolute;
+            right: 0;
+            transition: transform 0.2s;
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.9);
+        }
+
+        label {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: block;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            background: var(--input-bg);
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 8px;
+            font-size: 18px;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .suggestions-box {
+            background: var(--container-bg);
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            max-height: 60vh;
+            overflow-y: auto;
+            display: none;
+            margin-top: 8px;
+            border: 1px solid var(--border-color);
+            transition: 0.3s;
+        }
+
+        .suggestion-item {
+            padding: 16px 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-main);
+            transition: 0.3s;
+        }
+
+        .suggestion-item:hover,
+        .suggestion-item:active {
+            background: var(--item-hover);
+        }
+
+        .yt-suggestion-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .yt-suggestion-item:hover,
+        .yt-suggestion-item:active {
+            background: var(--item-hover);
+        }
+
+        .yt-suggestion-item:last-child {
+            border-bottom: none;
+        }
+
         .yt-thumbnail {
-            width: 110px; height: 62px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: #111;
+            width: 110px;
+            height: 62px;
+            border-radius: 6px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #111;
         }
-        .yt-suggestion-title { display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
-        .yt-suggestion-title .song-name { color: var(--text-main); font-size: 16px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; font-weight: bold; }
-        .yt-suggestion-title .channel-name { color: var(--primary); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .no-results { padding: 20px 15px; text-align: center; color: var(--danger); font-size: 16px; line-height: 1.4; }
-        .yt-header { padding: 12px 15px; color: var(--danger); font-weight: bold; font-size: 16px; border-bottom: 1px solid var(--border-color); background: var(--container-bg); position: sticky; top: 0; z-index: 2; }
+        .yt-suggestion-title {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow: hidden;
+        }
 
-        /* --- TRYB WYSZUKIWANIA --- */
+        .yt-suggestion-title .song-name {
+            color: var(--text-main);
+            font-size: 16px;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: bold;
+        }
+
+        .yt-suggestion-title .channel-name {
+            color: var(--primary);
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .no-results {
+            padding: 20px 15px;
+            text-align: center;
+            color: var(--danger);
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        .yt-header {
+            padding: 12px 15px;
+            color: var(--danger);
+            font-weight: bold;
+            font-size: 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--container-bg);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
         body.search-focus-mode .hide-in-search,
         body.search-focus-mode #txtTitle,
         body.search-focus-mode #txtSchedule,
-        body.search-focus-mode .top-controls { 
-            display: none !important; 
+        body.search-focus-mode .top-controls {
+            display: none !important;
         }
-        
-        body.search-focus-mode { padding: 0 !important; background-color: var(--container-bg); }
-        body.search-focus-mode .container { 
-            border-radius: 0 !important; 
-            box-shadow: none !important; 
-            padding-bottom: 80vh !important; 
+
+        body.search-focus-mode {
+            padding: 0 !important;
+            background-color: var(--container-bg);
+        }
+
+        body.search-focus-mode .container {
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding-bottom: 80vh !important;
             max-width: 100%;
             border: none;
         }
-        
-        .search-dismiss-text { display: none; color: var(--primary); font-size: 13px; margin-top: 8px; text-align: right; font-weight: bold; opacity: 0.8; }
-        body.search-focus-mode .search-dismiss-text { display: block; }
-        
-        button.action-btn { background-color: var(--primary); color: var(--btn-text); font-weight: bold; font-size: 20px; padding: 18px; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s, transform 0.1s; margin-top: 10px; }
-        button.action-btn:active { background-color: var(--primary-hover); transform: scale(0.98); }
-        button.action-btn:disabled { background-color: #888; color: #ccc; cursor: not-allowed; transform: none; }
-        
-        .birthday-notice { text-align: center; font-size: 16px; color: var(--primary); margin-top: 15px; line-height: 1.4; font-weight: bold; transition: color 0.3s; }
-        .extra-info-text { text-align: center; font-size: 14px; color: var(--text-muted); margin-top: 5px; line-height: 1.5; padding: 15px 10px; background: rgba(128,128,128,0.1); border-radius: 8px; border: 1px solid var(--border-color); transition: color 0.3s, border 0.3s; }
 
-        #loadingMsg, #successMsg { text-align: center; font-size: 16px; margin-top: -10px; color: var(--primary); font-weight: bold; }
-        #successMsg { color: #4CAF50; display: none; font-size: 18px; padding: 20px; background: rgba(76, 175, 80, 0.1); border-radius: 8px; margin-bottom: 20px; }
-        #successSummary { margin-top: 12px; padding: 15px; background: rgba(0, 0, 0, 0.1); border-radius: 8px; color: var(--text-main); font-size: 16px; text-align: left; line-height: 1.6; border: 1px solid rgba(76, 175, 80, 0.3); }
-        #redirectTimer { margin-top: 15px; font-weight: bold; color: var(--primary); font-size: 16px; text-align: center; }
-        #formContent { display: flex; flex-direction: column; gap: 15px; width: 100%; }
-        #ytGroup { display: none; background: var(--danger-bg); padding: 15px; border-radius: 8px; border: 1px dashed var(--danger); margin-top: 5px; }
-        
-        #searchYTHelper { margin: 0; padding: 0 16px; background: #ff0000; color: white; font-size: 18px; font-weight: bold; flex-shrink: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; border: none; display: none; }
-        #searchYTHelper:hover:not(:disabled) { background: #d50000; }
-        #searchYTHelper:active:not(:disabled) { transform: scale(0.95); }
+        .search-dismiss-text {
+            display: none;
+            color: var(--primary);
+            font-size: 13px;
+            margin-top: 8px;
+            text-align: right;
+            font-weight: bold;
+            opacity: 0.8;
+        }
+
+        body.search-focus-mode .search-dismiss-text {
+            display: block;
+        }
+
+        button.action-btn {
+            background-color: var(--primary);
+            color: var(--btn-text);
+            font-weight: bold;
+            font-size: 20px;
+            padding: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+
+        button.action-btn:active {
+            background-color: var(--primary-hover);
+            transform: scale(0.98);
+        }
+
+        button.action-btn:disabled {
+            background-color: #888;
+            color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .birthday-notice {
+            text-align: center;
+            font-size: 16px;
+            color: var(--primary);
+            margin-top: 15px;
+            line-height: 1.4;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .extra-info-text {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            line-height: 1.5;
+            padding: 15px 10px;
+            background: rgba(128, 128, 128, 0.1);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: 0.3s;
+        }
+
+        #loadingMsg,
+        #successMsg {
+            text-align: center;
+            font-size: 16px;
+            margin-top: -10px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        #successMsg {
+            color: #4CAF50;
+            display: none;
+            font-size: 18px;
+            padding: 20px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        #successSummary {
+            margin-top: 12px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 16px;
+            text-align: left;
+            line-height: 1.6;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        #redirectTimer {
+            margin-top: 15px;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 16px;
+            text-align: center;
+        }
+
+        #formContent {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        #ytGroup {
+            display: none;
+            background: var(--danger-bg);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--danger);
+            margin-top: 5px;
+        }
+
+        #searchYTHelper {
+            margin: 0;
+            padding: 0 16px;
+            background: #ff0000;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            flex-shrink: 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: none;
+            display: none;
+        }
+
+        #searchYTHelper:hover:not(:disabled) {
+            background: #d50000;
+        }
+
+        #searchYTHelper:active:not(:disabled) {
+            transform: scale(0.95);
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container" id="appContainer">
-    <div class="top-controls">
-        <div style="width: 24px;"></div> <div class="lang-toggle">
-            <button id="btnPl" class="lang-btn active" onclick="setLanguage('pl')">PL</button>
-            <button id="btnEn" class="lang-btn" onclick="setLanguage('en')">EN</button>
-        </div>
-        <button id="themeToggle" class="theme-toggle" title="Zmień motyw">☀️</button>
-    </div>
-
-    <h1 id="txtTitle">KARAOKE INDEKS</h1>
-    <div class="schedule" id="txtSchedule">
-        Czwartek (20.00-1.00)<br>Piątek (21.00-2.00)<br>Niedziela (21.00-2.00)
-    </div>
-    
-    <div id="loadingMsg">Pobieranie dostępnej bazy... ⏳</div>
-    
-    <div id="successMsg">
-        <strong style="font-size: 22px;" id="txtSuccessTitle">✅ Zamówienie wysłane!</strong><br>
-        <span style="font-size:15px; color: #4CAF50;" id="txtSuccessSub">Zaraz przygotujemy Twój utwór.</span>
-        <div id="successSummary"></div>
-        <div id="redirectTimer"></div>
-    </div>
-
-    <div id="formContent">
-        <div class="input-group" id="searchInputGroup">
-            <label for="szukaj" id="lblSzukaj">Tytuł Piosenki (Wymagane)</label>
-            <div style="display: flex; gap: 8px;">
-                <input type="text" id="szukaj" placeholder="Zacznij wpisywać..." autocomplete="off" style="flex: 1;">
-                <button type="button" id="searchYTHelper" title="Pobierz z YouTube">YT 🔗</button>
+    <div class="container" id="appContainer">
+        <div class="top-controls">
+            <div style="width: 24px;"></div>
+            <div class="lang-toggle">
+                <button id="btnPl" class="lang-btn active" onclick="setLanguage('pl')">PL</button>
+                <button id="btnEn" class="lang-btn" onclick="setLanguage('en')">EN</button>
             </div>
-            <div id="searchDismissHelper" class="search-dismiss-text">Kliknij obok, aby wrócić ☝️</div>
-            <div id="suggestions" class="suggestions-box"></div>
+            <button id="themeToggle" class="theme-toggle" title="Zmień motyw">☀️</button>
         </div>
 
-        <div class="input-group hide-in-search" id="ytGroup">
-            <label for="ytLink" style="color: var(--danger); margin-bottom: 5px;" id="lblYtLink">Link do YouTube</label>
-            <small id="dbWarning" style="color: var(--danger); opacity: 0.8; margin-bottom: 10px; display: block; font-size: 14px;">Wklej link do wersji Karaoke z YouTube poniżej:</small>
-            <input type="text" id="ytLink" placeholder="Wklej link do wideo..." autocomplete="off" style="width: 100%; border-color: var(--danger); box-sizing: border-box;">
+        <h1 id="txtTitle">KARAOKE INDEKS</h1>
+        <div class="schedule" id="txtSchedule">
+            Czwartek (20.00-1.00)<br>Piątek (21.00-2.00)<br>Niedziela (21.00-2.00)
         </div>
 
-        <div class="input-group hide-in-search">
-            <label for="imie" id="lblImie">Twoje lub Wasze imiona (Wymagane)</label>
-            <input type="text" id="imie" placeholder="Wpisz imię..." autocomplete="off">
+        <div id="loadingMsg">Pobieranie dostępnej bazy... ⏳</div>
+
+        <div id="successMsg">
+            <strong style="font-size: 22px;" id="txtSuccessTitle">✅ Zamówienie wysłane!</strong><br>
+            <span style="font-size:15px; color: #4CAF50;" id="txtSuccessSub">Zaraz przygotujemy Twój utwór.</span>
+            <div id="successSummary"></div>
+            <div id="redirectTimer"></div>
         </div>
 
-        <div class="input-group hide-in-search">
-            <label for="narodowosc" id="lblNarodowosc">Narodowość (Opcjonalnie)</label>
-            <input type="text" id="narodowosc" placeholder="Np. Polska, UK, Spain..." autocomplete="off">
-        </div>
+        <div id="formContent">
+            <div class="input-group" id="searchInputGroup">
+                <label for="szukaj" id="lblSzukaj">Tytuł Piosenki (Wymagane)</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="szukaj" placeholder="Zacznij wpisywać..." autocomplete="off"
+                        style="flex: 1;">
+                    <button type="button" id="searchYTHelper" title="Pobierz z YouTube">YT 🔗</button>
+                </div>
+                <div id="searchDismissHelper" class="search-dismiss-text">Kliknij obok, aby wrócić ☝️</div>
+                <div id="suggestions" class="suggestions-box"></div>
+            </div>
 
-        <div class="input-group hide-in-search">
-            <label for="kod" id="lblKod">Kod Fast Pass / VIP (Opcjonalnie)</label>
-            <input type="text" id="kod" placeholder="Wpisz 6-znakowy kod" maxlength="6" style="text-transform: uppercase;" autocomplete="off">
-        </div>
+            <div class="input-group hide-in-search" id="ytGroup">
+                <label for="ytLink" style="color: var(--danger); margin-bottom: 5px;" id="lblYtLink">Link do
+                    YouTube</label>
+                <small id="dbWarning"
+                    style="color: var(--danger); opacity: 0.8; margin-bottom: 10px; display: block; font-size: 14px;">Wklej
+                    link do wersji Karaoke z YouTube poniżej:</small>
+                <input type="text" id="ytLink" placeholder="Wklej link do wideo..." autocomplete="off"
+                    style="width: 100%; border-color: var(--danger); box-sizing: border-box;">
+            </div>
 
-        <button id="submitBtn" class="action-btn hide-in-search" disabled>Wybierz utwór z bazy 🛑</button>
-        
-        <div id="birthdayNoticeText" class="birthday-notice hide-in-search"></div>
-        
-        <div id="extraInfoText" class="extra-info-text hide-in-search"></div>
+            <div class="input-group hide-in-search">
+                <label for="imie" id="lblImie">Twoje lub Wasze imiona (Wymagane)</label>
+                <input type="text" id="imie" placeholder="Wpisz imię..." autocomplete="off">
+            </div>
+
+            <div class="input-group hide-in-search">
+                <label for="narodowosc" id="lblNarodowosc">Narodowość (Opcjonalnie)</label>
+                <input type="text" id="narodowosc" placeholder="Np. Polska, UK, Spain..." autocomplete="off">
+            </div>
+
+            <div class="input-group hide-in-search">
+                <label for="kod" id="lblKod">Kod Fast Pass / VIP (Opcjonalnie)</label>
+                <input type="text" id="kod" placeholder="Wpisz 6-znakowy kod" maxlength="6"
+                    style="text-transform: uppercase;" autocomplete="off">
+            </div>
+
+            <button id="submitBtn" class="action-btn hide-in-search" disabled>Wybierz utwór z bazy 🛑</button>
+
+            <div id="birthdayNoticeText" class="birthday-notice hide-in-search"></div>
+            <div id="extraInfoText" class="extra-info-text hide-in-search"></div>
+        </div>
     </div>
-</div>
 
-<script>
-    // --- OBSŁUGA MOTYWU ---
-    const themeToggle = document.getElementById('themeToggle');
-    let isLightMode = localStorage.getItem('karaoke_theme') === 'light';
-    
-    if (isLightMode) document.body.classList.add('light-mode');
-    themeToggle.textContent = isLightMode ? '🌙' : '☀️';
+    <script>
+        // --- KONFIGURACJA FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA7Eam7DIBhHG05gBTNGWuFLs2W8eLfqUo",
+            authDomain: "indeksowe-karaoke.firebaseapp.com",
+            databaseURL: "https://indeksowe-karaoke-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "indeksowe-karaoke",
+            storageBucket: "indeksowe-karaoke.firebasestorage.app",
+            messagingSenderId: "456394044590",
+            appId: "1:456394044590:web:1978e917b7674e7bd1293f"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('light-mode');
-        isLightMode = document.body.classList.contains('light-mode');
-        localStorage.setItem('karaoke_theme', isLightMode ? 'light' : 'dark');
+        // Wpisz tutaj klucz YouTube Data API, z nałożonym ograniczeniem na Twoją domenę!
+        const YOUTUBE_API_KEY = "AIzaSyBpZjDNbzK6VfYPjCYSYm_kb-j11MVhfN8";
+
+        // --- OBSŁUGA MOTYWU ---
+        const themeToggle = document.getElementById('themeToggle');
+        let isLightMode = localStorage.getItem('karaoke_theme') === 'light';
+
+        if (isLightMode) document.body.classList.add('light-mode');
         themeToggle.textContent = isLightMode ? '🌙' : '☀️';
-    });
 
-    const dict = {
-        pl: {
-            schedule: "Czwartek (20.00-1.00)<br>Piątek (21.00-2.00)<br>Niedziela (21.00-2.00)",
-            loading: "Pobieranie dostępnej bazy... ⏳",
-            loadingErr: "❌ Brak połączenia z bazą. Wpisz tytuł ręcznie.",
-            successTitle: "✅ Zamówienie wysłane!",
-            successSub: "Zaraz przygotujemy Twój utwór.",
-            lblSzukaj: "Tytuł Piosenki (Wymagane)",
-            plcSzukaj: "Zacznij wpisywać...",
-            ytHelperTitle: "Pobierz link z YouTube",
-            noResults: "⚠️ Brak wyników. Sprawdź literówki!<br><br>Jeśli utworu nie ma w bazie wpisz dokładnie tytuł i wykonawcę, kliknij przycisk <b>YT 🔗</b> obok, a po chwili dostaniesz listę 10 klipów z YouTube do wyboru",
-            dbWarning: "Wklej link do wersji Karaoke z YouTube poniżej:",
-            lblYtLink: "Link do YouTube",
-            plcYtLink: "Wklej link do wideo...",
-            lblImie: "Twoje lub Wasze imiona (Wymagane)",
-            plcImie: "Wpisz imię...",
-            lblNarodowosc: "Narodowość (Opcjonalnie)",
-            plcNarodowosc: "Np. Polska, UK, Spain...",
-            lblKod: "Kod Fast Pass / VIP (Opcjonalnie)",
-            plcKod: "Wpisz 6-znakowy kod",
-            btnDefault: "Wybierz utwór z bazy 🛑",
-            btnMissingTitle: "Wpisz tytuł utworu 🛑",
-            btnMissingLink: "Wybierz z listy lub użyj YT 🔗 🛑",
-            btnMissingName: "Wpisz swoje imię 🛑",
-            btnReady: "Wyślij Zamówienie 🚀",
-            btnSending: "Wysyłanie... ⏳",
-            btnErr: "❌ Błąd, spróbuj ponownie",
-            sumPerformer: "🎤 Wykonawca:",
-            sumSong: "🎵 Utwór:",
-            sumYt: "🔗 <i>Z własnego linku YT</i>",
-            sumCode: "🎟️ <i>Kod VIP:</i>",
-            redirect: "Powrót do formularza za: {s}s",
-            birthdayNotice: "Jeżeli Wasza koleżanka, kolega mają urodziny i chcecie im zaśpiewać 100 lat przyjdźcie i powiedzcie nam to, a zrobimy to razem. 🎉",
-            extraInfo: "<b>INFORMACJA</b> (dotyczy niedzielnego karaoke):<br><br>Drodzy przyjaciele!<br>Do 23:30 możecie śpiewać piosenki popularne tylko w Waszym kraju.<br>Po 23:30 przełączamy się na anglojęzyczne największe hity 🎤<br>Wpisujcie swoje piosenki, które połączą wszystkich<br>i zmienią Klub INDEKS w jedną wielką imprezę!",
-            dismissHelper: "Kliknij obok, aby wrócić ☝️",
-            ytError: "Wystąpił błąd podczas szukania na YT.",
-            ytSelectHeader: "Wybierz wersję z YouTube:"
-        },
-        en: {
-            schedule: "Thursday (20.00-1.00)<br>Friday (21.00-2.00)<br>Sunday (21.00-2.00)",
-            loading: "Loading available database... ⏳",
-            loadingErr: "❌ Database connection error. Enter title manually.",
-            successTitle: "✅ Order sent!",
-            successSub: "We will prepare your song shortly.",
-            lblSzukaj: "Song Title (Required)",
-            plcSzukaj: "Start typing...",
-            ytHelperTitle: "Get YouTube link",
-            noResults: "⚠️ No results. Please check for typos!<br><br>If the song is missing, type the exact title and artist, click the <b>YT 🔗</b> button next to it, and shortly you will get a list of 10 YouTube clips to choose from.",
-            dbWarning: "Paste the YouTube Karaoke link below:",
-            lblYtLink: "YouTube Link",
-            plcYtLink: "Paste the video link...",
-            lblImie: "Your name(s) (Required)",
-            plcImie: "Enter name...",
-            lblNarodowosc: "Nationality (Required)",
-            plcNarodowosc: "E.g. Poland, UK, Spain...",
-            lblKod: "Fast Pass / VIP Code (Optional)",
-            plcKod: "Enter 6-character code",
-            btnDefault: "Choose a song from the database 🛑",
-            btnMissingTitle: "Enter the song title 🛑",
-            btnMissingLink: "Choose from list or use YT 🔗 🛑",
-            btnMissingName: "Enter your name 🛑",
-            btnReady: "Send Order 🚀",
-            btnSending: "Sending... ⏳",
-            btnErr: "❌ Error, try again",
-            sumPerformer: "🎤 Performer:",
-            sumSong: "🎵 Song:",
-            sumYt: "🔗 <i>From custom YT link</i>",
-            sumCode: "🎟️ <i>VIP Code:</i>",
-            redirect: "Returning to form in: {s}s",
-            birthdayNotice: "If your friend is having a birthday and you want to sing Happy Birthday to them, come and tell us, and we'll do it together. 🎉",
-            extraInfo: "<b>INFORMATION</b> (applies to Sunday karaoke events):<br><br>Dear friends!<br>Until 11.30 PM, you can sing songs popular only in your country.<br>After 11.30 PM, we switch to English-language best hits 🎤<br>Write down your songs that will bring everyone together<br>and turn INDEKS Club into one big party!",
-            dismissHelper: "Click outside to return ☝️",
-            ytError: "Error while searching YT.",
-            ytSelectHeader: "Select YouTube version:"
-        }
-    };
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            isLightMode = document.body.classList.contains('light-mode');
+            localStorage.setItem('karaoke_theme', isLightMode ? 'light' : 'dark');
+            themeToggle.textContent = isLightMode ? '🌙' : '☀️';
+        });
 
-    let curLang = 'pl';
+        const dict = {
+            pl: { schedule: "Czwartek (20.00-1.00)<br>Piątek (21.00-2.00)<br>Niedziela (21.00-2.00)", loading: "Pobieranie dostępnej bazy... ⏳", loadingErr: "❌ Brak połączenia z bazą. Wpisz tytuł ręcznie.", successTitle: "✅ Zamówienie wysłane!", successSub: "Zaraz przygotujemy Twój utwór.", lblSzukaj: "Tytuł Piosenki (Wymagane)", plcSzukaj: "Zacznij wpisywać...", ytHelperTitle: "Pobierz link z YouTube", noResults: "⚠️ Brak wyników. Sprawdź literówki!<br><br>Jeśli utworu nie ma w bazie wpisz dokładnie tytuł i wykonawcę, kliknij przycisk <b>YT 🔗</b> obok, a po chwili dostaniesz listę klipów z YouTube do wyboru", dbWarning: "Wklej link do wersji Karaoke z YouTube poniżej:", lblYtLink: "Link do YouTube", plcYtLink: "Wklej link do wideo...", lblImie: "Twoje lub Wasze imiona (Wymagane)", plcImie: "Wpisz imię...", lblNarodowosc: "Narodowość (Opcjonalnie)", plcNarodowosc: "Np. Polska, UK, Spain...", lblKod: "Kod Fast Pass / VIP (Opcjonalnie)", plcKod: "Wpisz 6-znakowy kod", btnDefault: "Wybierz utwór z bazy 🛑", btnMissingTitle: "Wpisz tytuł utworu 🛑", btnMissingLink: "Wybierz z listy lub użyj YT 🔗 🛑", btnMissingName: "Wpisz swoje imię 🛑", btnReady: "Wyślij Zamówienie 🚀", btnSending: "Wysyłanie... ⏳", btnErr: "❌ Błąd, spróbuj ponownie", sumPerformer: "🎤 Wykonawca:", sumSong: "🎵 Utwór:", sumYt: "🔗 <i>Z własnego linku YT</i>", sumCode: "🎟️ <i>Kod VIP:</i>", redirect: "Powrót do formularza za: {s}s", birthdayNotice: "Jeżeli Wasza koleżanka, kolega mają urodziny i chcecie im zaśpiewać 100 lat przyjdźcie i powiedzcie nam to, a zrobimy to razem. 🎉", extraInfo: "<b>INFORMACJA</b> (dotyczy niedzielnego karaoke):<br><br>Drodzy przyjaciele!<br>Do 23:30 możecie śpiewać piosenki popularne tylko w Waszym kraju.<br>Po 23:30 przełączamy się na anglojęzyczne największe hity 🎤<br>Wpisujcie swoje piosenki, które połączą wszystkich<br>i zmienią Klub INDEKS w jedną wielką imprezę!", dismissHelper: "Kliknij obok, aby wrócić ☝️", ytError: "Wystąpił błąd podczas szukania na YT. Sprawdź klucz API.", ytSelectHeader: "Wybierz wersję z YouTube:" },
+            en: { schedule: "Thursday (20.00-1.00)<br>Friday (21.00-2.00)<br>Sunday (21.00-2.00)", loading: "Loading available database... ⏳", loadingErr: "❌ Database connection error. Enter title manually.", successTitle: "✅ Order sent!", successSub: "We will prepare your song shortly.", lblSzukaj: "Song Title (Required)", plcSzukaj: "Start typing...", ytHelperTitle: "Get YouTube link", noResults: "⚠️ No results. Please check for typos!<br><br>If the song is missing, type the exact title and artist, click the <b>YT 🔗</b> button next to it, and shortly you will get a list of YouTube clips to choose from.", dbWarning: "Paste the YouTube Karaoke link below:", lblYtLink: "YouTube Link", plcYtLink: "Paste the video link...", lblImie: "Your name(s) (Required)", plcImie: "Enter name...", lblNarodowosc: "Nationality (Required)", plcNarodowosc: "E.g. Poland, UK, Spain...", lblKod: "Fast Pass / VIP Code (Optional)", plcKod: "Enter 6-character code", btnDefault: "Choose a song from the database 🛑", btnMissingTitle: "Enter the song title 🛑", btnMissingLink: "Choose from list or use YT 🔗 🛑", btnMissingName: "Enter your name 🛑", btnReady: "Send Order 🚀", btnSending: "Sending... ⏳", btnErr: "❌ Error, try again", sumPerformer: "🎤 Performer:", sumSong: "🎵 Song:", sumYt: "🔗 <i>From custom YT link</i>", sumCode: "🎟️ <i>VIP Code:</i>", redirect: "Returning to form in: {s}s", birthdayNotice: "If your friend is having a birthday and you want to sing Happy Birthday to them, come and tell us, and we'll do it together. 🎉", extraInfo: "<b>INFORMATION</b> (applies to Sunday karaoke events):<br><br>Dear friends!<br>Until 11.30 PM, you can sing songs popular only in your country.<br>After 11.30 PM, we switch to English-language best hits 🎤<br>Write down your songs that will bring everyone together<br>and turn INDEKS Club into one big party!", dismissHelper: "Click outside to return ☝️", ytError: "Error while searching YT. Check API key.", ytSelectHeader: "Select YouTube version:" }
+        };
 
-    function setLanguage(lang) {
-        curLang = lang;
-        document.getElementById('btnPl').classList.toggle('active', lang === 'pl');
-        document.getElementById('btnEn').classList.toggle('active', lang === 'en');
-        document.documentElement.lang = lang;
+        let curLang = 'pl';
 
-        const d = dict[lang];
-        document.getElementById('txtSchedule').innerHTML = d.schedule;
-        if(document.getElementById('loadingMsg').textContent.includes('⏳')) document.getElementById('loadingMsg').textContent = d.loading;
-        document.getElementById('txtSuccessTitle').textContent = d.successTitle;
-        document.getElementById('txtSuccessSub').textContent = d.successSub;
-        
-        document.getElementById('lblSzukaj').textContent = d.lblSzukaj;
-        document.getElementById('szukaj').placeholder = d.plcSzukaj;
-        document.getElementById('searchYTHelper').title = d.ytHelperTitle;
-        document.getElementById('dbWarning').textContent = d.dbWarning;
-        
-        document.getElementById('lblYtLink').textContent = d.lblYtLink;
-        document.getElementById('ytLink').placeholder = d.plcYtLink;
-        
-        document.getElementById('lblImie').textContent = d.lblImie;
-        document.getElementById('imie').placeholder = d.plcImie;
-        
-        document.getElementById('lblNarodowosc').textContent = d.lblNarodowosc;
-        document.getElementById('narodowosc').placeholder = d.plcNarodowosc;
-        
-        document.getElementById('lblKod').textContent = d.lblKod;
-        document.getElementById('kod').placeholder = d.plcKod;
-        
-        document.getElementById('birthdayNoticeText').innerHTML = d.birthdayNotice;
-        document.getElementById('extraInfoText').innerHTML = d.extraInfo;
-        
-        document.getElementById('searchDismissHelper').textContent = d.dismissHelper;
+        function setLanguage(lang) {
+            curLang = lang;
+            document.getElementById('btnPl').classList.toggle('active', lang === 'pl');
+            document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+            document.documentElement.lang = lang;
 
-        if (suggestionsBox.querySelector('.no-results')) {
-            suggestionsBox.querySelector('.no-results').innerHTML = d.noResults;
-        }
-        if (suggestionsBox.querySelector('.yt-header')) {
-            suggestionsBox.querySelector('.yt-header').innerHTML = d.ytSelectHeader;
-        }
+            const d = dict[lang];
+            document.getElementById('txtSchedule').innerHTML = d.schedule;
+            if (document.getElementById('loadingMsg').textContent.includes('⏳')) document.getElementById('loadingMsg').textContent = d.loading;
+            document.getElementById('txtSuccessTitle').textContent = d.successTitle;
+            document.getElementById('txtSuccessSub').textContent = d.successSub;
+            document.getElementById('lblSzukaj').textContent = d.lblSzukaj;
+            document.getElementById('szukaj').placeholder = d.plcSzukaj;
+            document.getElementById('searchYTHelper').title = d.ytHelperTitle;
+            document.getElementById('dbWarning').textContent = d.dbWarning;
+            document.getElementById('lblYtLink').textContent = d.lblYtLink;
+            document.getElementById('ytLink').placeholder = d.plcYtLink;
+            document.getElementById('lblImie').textContent = d.lblImie;
+            document.getElementById('imie').placeholder = d.plcImie;
+            document.getElementById('lblNarodowosc').textContent = d.lblNarodowosc;
+            document.getElementById('narodowosc').placeholder = d.plcNarodowosc;
+            document.getElementById('lblKod').textContent = d.lblKod;
+            document.getElementById('kod').placeholder = d.plcKod;
+            document.getElementById('birthdayNoticeText').innerHTML = d.birthdayNotice;
+            document.getElementById('extraInfoText').innerHTML = d.extraInfo;
+            document.getElementById('searchDismissHelper').textContent = d.dismissHelper;
 
-        checkInputs();
-    }
-
-    const GIST_ID = 'c3050f88e17d6e1ec9e86bdbea6277e0'; 
-    
-    // ZAMIEŃ TEN LINK NA SWÓJ (Z GOOGLE APPS SCRIPT)
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxJ1_L6d8lFs8scNEiqd0kSKwm9tooJWr2sPrPlOsne_8zFB3ZTuBUgidpz9E-uGJ5U/exec';
-    
-    let baza = [];
-    let isSelectedFromDb = false;
-    let isFocusing = false;
-    let isSending = false;
-
-    function getDeviceId() {
-        let deviceId = localStorage.getItem('karaoke_device_id');
-        if (!deviceId) {
-            deviceId = 'id-' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('karaoke_device_id', deviceId);
-        }
-        return deviceId;
-    }
-    const currentDeviceId = getDeviceId();
-
-    const szukajInput = document.getElementById('szukaj');
-    const searchInputGroup = document.getElementById('searchInputGroup');
-    const ytLinkInput = document.getElementById('ytLink');
-    const ytGroup = document.getElementById('ytGroup');
-    const searchYTHelper = document.getElementById('searchYTHelper');
-
-    const imieInput = document.getElementById('imie');
-    const narodowoscInput = document.getElementById('narodowosc');
-    const kodInput = document.getElementById('kod');
-    const suggestionsBox = document.getElementById('suggestions');
-    const submitBtn = document.getElementById('submitBtn');
-    const loadingMsg = document.getElementById('loadingMsg');
-    
-    const successMsg = document.getElementById('successMsg');
-    const successSummary = document.getElementById('successSummary'); 
-    const redirectTimer = document.getElementById('redirectTimer');
-
-    async function loadBaza() {
-        try {
-            const response = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-            const data = await response.json();
-            baza = JSON.parse(data.files['baza.json'].content);
-            loadingMsg.style.display = 'none';
-            checkInputs();
-        } catch (err) {
-            loadingMsg.innerHTML = dict[curLang].loadingErr;
-            loadingMsg.style.color = "var(--danger)";
+            if (suggestionsBox.querySelector('.no-results')) { suggestionsBox.querySelector('.no-results').innerHTML = d.noResults; }
+            if (suggestionsBox.querySelector('.yt-header')) { suggestionsBox.querySelector('.yt-header').innerHTML = d.ytSelectHeader; }
             checkInputs();
         }
-    }
-    loadBaza();
 
-    function normalizeText(str) {
-        return str.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
-    }
+        let baza = [];
+        let isSelectedFromDb = false;
+        let isFocusing = false;
+        let isSending = false;
 
-    szukajInput.addEventListener('focus', () => {
-        isFocusing = true; 
-        document.body.classList.add('search-focus-mode');
-        
-        if (szukajInput.value.trim().length > 0) {
-            szukajInput.dispatchEvent(new Event('input')); 
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('karaoke_device_id');
+            if (!deviceId) {
+                deviceId = 'id-' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('karaoke_device_id', deviceId);
+            }
+            return deviceId;
         }
-        
-        setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 100);
+        const currentDeviceId = getDeviceId();
 
-        setTimeout(() => {
-            isFocusing = false;
-        }, 400);
-    });
+        const szukajInput = document.getElementById('szukaj');
+        const searchInputGroup = document.getElementById('searchInputGroup');
+        const ytLinkInput = document.getElementById('ytLink');
+        const ytGroup = document.getElementById('ytGroup');
+        const searchYTHelper = document.getElementById('searchYTHelper');
 
-    document.addEventListener('click', (e) => {
-        if (isFocusing) return; 
-        
-        if (!e.target.closest('#searchInputGroup')) {
-            document.body.classList.remove('search-focus-mode');
-            suggestionsBox.style.display = 'none';
-            checkInputs(); 
-        }
-    });
+        const imieInput = document.getElementById('imie');
+        const narodowoscInput = document.getElementById('narodowosc');
+        const kodInput = document.getElementById('kod');
+        const suggestionsBox = document.getElementById('suggestions');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingMsg = document.getElementById('loadingMsg');
+        const successMsg = document.getElementById('successMsg');
+        const successSummary = document.getElementById('successSummary');
+        const redirectTimer = document.getElementById('redirectTimer');
 
-    szukajInput.addEventListener('input', () => {
-        isSelectedFromDb = false; 
-        const rawQuery = szukajInput.value;
-        suggestionsBox.innerHTML = '';
-        
-        const queryWords = normalizeText(rawQuery).split(' ').filter(w => w.length > 0);
-        
-        if (queryWords.length === 0) {
-            suggestionsBox.style.display = 'none';
-            searchYTHelper.style.display = 'none'; 
-            checkInputs();
-            return;
-        }
-
-        const matches = baza.filter(s => {
-            const targetStr = normalizeText(s.title);
-            return queryWords.every(word => targetStr.includes(word));
-        }).slice(0, 15);
-        
-        if (matches.length > 0) {
-            suggestionsBox.style.display = 'block';
-            searchYTHelper.style.display = 'none'; 
-            
-            matches.forEach(song => {
-                const div = document.createElement('div');
-                div.className = 'suggestion-item';
-                div.innerHTML = `🎵 <span style="margin-left: 8px;">${song.title}</span>`;
-                
-                div.addEventListener('click', () => {
-                    szukajInput.value = song.title;
-                    isSelectedFromDb = true; 
-                    suggestionsBox.style.display = 'none';
-                    document.body.classList.remove('search-focus-mode'); 
-                    checkInputs();
-                });
-                
-                suggestionsBox.appendChild(div);
+        // Pobieranie bazy z Firebase Realtime Database
+        function loadBaza() {
+            db.ref('baza').once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    baza = Array.isArray(data) ? data : Object.values(data);
+                }
+                loadingMsg.style.display = 'none';
+                checkInputs();
+            }).catch((err) => {
+                console.error("Firebase Error: ", err);
+                loadingMsg.innerHTML = dict[curLang].loadingErr;
+                loadingMsg.style.color = "var(--danger)";
+                checkInputs();
             });
-        } else {
-            suggestionsBox.style.display = 'block';
-            searchYTHelper.style.display = 'flex'; 
-            
-            const div = document.createElement('div');
-            div.className = 'no-results';
-            div.innerHTML = dict[curLang].noResults;
-            suggestionsBox.appendChild(div);
         }
-        checkInputs();
-    });
+        loadBaza();
 
-    // POBIERANIE WYNIKÓW Z SERWERA GOOGLE (Z MINIATURKAMI)
-    searchYTHelper.addEventListener('click', async () => {
-        const query = szukajInput.value.trim();
-        if (!query) return;
+        function normalizeText(str) {
+            return str.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
+        }
 
-        const originalText = searchYTHelper.innerHTML;
-        searchYTHelper.innerHTML = '⏳...';
-        searchYTHelper.disabled = true;
+        szukajInput.addEventListener('focus', () => {
+            isFocusing = true;
+            document.body.classList.add('search-focus-mode');
+            if (szukajInput.value.trim().length > 0) szukajInput.dispatchEvent(new Event('input'));
+            setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+            setTimeout(() => isFocusing = false, 400);
+        });
 
-        try {
-            const gasSearchUrl = `${WEB_APP_URL}?action=searchYT&q=${encodeURIComponent(query)}`;
-            const response = await fetch(gasSearchUrl);
-            const data = await response.json();
+        document.addEventListener('click', (e) => {
+            if (isFocusing) return;
+            if (!e.target.closest('#searchInputGroup')) {
+                document.body.classList.remove('search-focus-mode');
+                suggestionsBox.style.display = 'none';
+                checkInputs();
+            }
+        });
 
-            if (data.items && data.items.length > 0) {
-                suggestionsBox.innerHTML = '';
-                
-                const header = document.createElement('div');
-                header.className = 'yt-header';
-                header.innerHTML = dict[curLang].ytSelectHeader;
-                suggestionsBox.appendChild(header);
+        szukajInput.addEventListener('input', () => {
+            isSelectedFromDb = false;
+            const rawQuery = szukajInput.value;
+            suggestionsBox.innerHTML = '';
 
-                data.items.forEach(item => {
-                    const videoId = item.id.videoId;
-                    const title = item.snippet.title;
-                    const channel = item.snippet.channelTitle;
-                    
-                    const thumbUrl = item.snippet.thumbnails.medium ? item.snippet.thumbnails.medium.url : item.snippet.thumbnails.default.url;
-                    
+            const queryWords = normalizeText(rawQuery).split(' ').filter(w => w.length > 0);
+            if (queryWords.length === 0) {
+                suggestionsBox.style.display = 'none';
+                searchYTHelper.style.display = 'none';
+                checkInputs();
+                return;
+            }
+
+            const matches = baza.filter(s => {
+                const targetStr = normalizeText(s.title);
+                return queryWords.every(word => targetStr.includes(word));
+            }).slice(0, 15);
+
+            if (matches.length > 0) {
+                suggestionsBox.style.display = 'block';
+                searchYTHelper.style.display = 'none';
+
+                matches.forEach(song => {
                     const div = document.createElement('div');
-                    div.className = 'yt-suggestion-item';
-                    
-                    div.innerHTML = `
+                    div.className = 'suggestion-item';
+                    div.style.display = 'flex';
+                    div.style.alignItems = 'center';
+
+                    // Domyślna ikona, jeśli nie ma linku
+                    let thumbHtml = '<span style="font-size: 24px; margin-right: 12px; min-width: 45px; text-align: center;">🎵</span>';
+
+                    if (song.url) {
+                        if (song.url.includes('ising.pl')) {
+                            // Plakietka dla iSing
+                            thumbHtml = '<span style="margin-right: 12px; padding: 4px 8px; border-radius: 4px; background: #0288d1; color: white; font-size: 12px; font-weight: bold; min-width: 35px; text-align: center;">iSing</span>';
+                        } else {
+                            // Wyciąganie ID filmu z linku YT
+                            let vid = '';
+                            if (song.url.includes('v=')) {
+                                vid = song.url.split('v=')[1].split('&')[0].substring(0, 11);
+                            } else if (song.url.includes('youtu.be/')) {
+                                vid = song.url.split('youtu.be/')[1].split('?')[0].substring(0, 11);
+                            }
+
+                            if (vid) {
+                                // Pobieramy darmową miniaturkę z serwerów YT (bez API!)
+                                thumbHtml = `<img src="https://img.youtube.com/vi/${vid}/default.jpg" style="width: 55px; height: 40px; border-radius: 6px; object-fit: cover; margin-right: 12px; background: #111; flex-shrink: 0;">`;
+                            } else {
+                                // Plakietka awaryjna dla niestandardowych linków YT
+                                thumbHtml = '<span style="margin-right: 12px; padding: 4px 8px; border-radius: 4px; background: #c62828; color: white; font-size: 12px; font-weight: bold; min-width: 35px; text-align: center;">YT</span>';
+                            }
+                        }
+                    }
+
+                    div.innerHTML = `${thumbHtml} <span style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${song.title}</span>`;
+
+                    div.addEventListener('click', () => {
+                        szukajInput.value = song.title;
+                        isSelectedFromDb = true;
+                        suggestionsBox.style.display = 'none';
+                        document.body.classList.remove('search-focus-mode');
+                        checkInputs();
+                    });
+                    suggestionsBox.appendChild(div);
+                });
+            } else {
+                suggestionsBox.style.display = 'block';
+                searchYTHelper.style.display = 'flex';
+
+                const div = document.createElement('div');
+                div.className = 'no-results';
+                div.innerHTML = dict[curLang].noResults;
+                suggestionsBox.appendChild(div);
+            }
+            checkInputs();
+        });
+
+        // Wyszukiwanie YouTube przez publiczne Google API
+        searchYTHelper.addEventListener('click', async () => {
+            const query = szukajInput.value.trim();
+            if (!query) return;
+
+            const originalText = searchYTHelper.innerHTML;
+            searchYTHelper.innerHTML = '⏳...';
+            searchYTHelper.disabled = true;
+
+            try {
+                const ytApiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${encodeURIComponent(query + ' karaoke')}&type=video&key=${YOUTUBE_API_KEY}`;
+                const response = await fetch(ytApiUrl);
+                const data = await response.json();
+
+                if (data.items && data.items.length > 0) {
+                    suggestionsBox.innerHTML = '';
+                    const header = document.createElement('div');
+                    header.className = 'yt-header';
+                    header.innerHTML = dict[curLang].ytSelectHeader;
+                    suggestionsBox.appendChild(header);
+
+                    data.items.forEach(item => {
+                        const videoId = item.id.videoId;
+                        const title = item.snippet.title;
+                        const channel = item.snippet.channelTitle;
+                        const thumbUrl = item.snippet.thumbnails.medium ? item.snippet.thumbnails.medium.url : item.snippet.thumbnails.default.url;
+
+                        const div = document.createElement('div');
+                        div.className = 'yt-suggestion-item';
+                        div.innerHTML = `
                         <img src="${thumbUrl}" class="yt-thumbnail" alt="thumbnail">
                         <div class="yt-suggestion-title">
                             <span class="song-name">${title}</span>
                             <span class="channel-name">📺 ${channel}</span>
                         </div>
                     `;
-                    
-                    div.addEventListener('click', () => {
-                        ytLinkInput.value = `https://www.youtube.com/watch?v=${videoId}`;
-                        isSelectedFromDb = false; 
-                        ytGroup.style.display = 'flex';
-                        document.body.classList.remove('search-focus-mode');
-                        suggestionsBox.style.display = 'none';
-                        checkInputs();
+
+                        div.addEventListener('click', () => {
+                            ytLinkInput.value = `https://www.youtube.com/watch?v=${videoId}`;
+                            isSelectedFromDb = false;
+                            ytGroup.style.display = 'flex';
+                            document.body.classList.remove('search-focus-mode');
+                            suggestionsBox.style.display = 'none';
+                            checkInputs();
+                        });
+                        suggestionsBox.appendChild(div);
                     });
-                    
-                    suggestionsBox.appendChild(div);
-                });
-                
-                suggestionsBox.style.display = 'block';
+                    suggestionsBox.style.display = 'block';
+                } else {
+                    alert(dict[curLang].noResults);
+                }
+            } catch (error) {
+                console.error("Błąd YouTube API:", error);
+                alert(dict[curLang].ytError);
+            } finally {
+                searchYTHelper.innerHTML = originalText;
+                searchYTHelper.disabled = false;
+            }
+        });
 
+        function checkInputs() {
+            if (isSending) return;
+
+            const d = dict[curLang];
+            const titleVal = szukajInput.value.trim();
+            const hasTitle = titleVal.length > 0;
+            const hasName = imieInput.value.trim().length > 0;
+
+            if (hasTitle && !isSelectedFromDb) {
+                const exactMatch = baza.find(s => s.title.toLowerCase() === titleVal.toLowerCase());
+                if (exactMatch) {
+                    isSelectedFromDb = true;
+                    szukajInput.value = exactMatch.title;
+                }
+            }
+
+            const ytLinkVal = ytLinkInput.value.trim();
+            const hasValidYtLink = ytLinkVal.length > 0 && (ytLinkVal.includes('youtube.com') || ytLinkVal.includes('youtu.be'));
+
+            if (hasTitle && !isSelectedFromDb) { ytGroup.style.display = 'flex'; }
+            else { ytGroup.style.display = 'none'; ytLinkInput.value = ''; }
+
+            if (hasName && hasTitle && (isSelectedFromDb || hasValidYtLink)) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = d.btnReady;
             } else {
-                alert(dict[curLang].noResults);
-            }
-        } catch (error) {
-            console.error("Błąd Proxy YouTube API:", error);
-            alert(dict[curLang].ytError);
-        } finally {
-            searchYTHelper.innerHTML = originalText;
-            searchYTHelper.disabled = false;
-        }
-    });
-
-    function checkInputs() {
-        if (isSending) return; 
-
-        const d = dict[curLang];
-        const titleVal = szukajInput.value.trim();
-        const hasTitle = titleVal.length > 0;
-        const hasName = imieInput.value.trim().length > 0;
-        
-        if (hasTitle && !isSelectedFromDb) {
-            const exactMatch = baza.find(s => s.title.toLowerCase() === titleVal.toLowerCase());
-            if (exactMatch) {
-                isSelectedFromDb = true;
-                szukajInput.value = exactMatch.title; 
+                submitBtn.disabled = true;
+                if (!hasTitle) { submitBtn.textContent = d.btnMissingTitle; }
+                else if (!isSelectedFromDb && !hasValidYtLink) { submitBtn.textContent = d.btnMissingLink; }
+                else if (!hasName) { submitBtn.textContent = d.btnMissingName; }
+                else { submitBtn.textContent = d.btnDefault; }
             }
         }
 
-        const ytLinkVal = ytLinkInput.value.trim();
-        const hasValidYtLink = ytLinkVal.length > 0 && (ytLinkVal.includes('youtube.com') || ytLinkVal.includes('youtu.be'));
+        imieInput.addEventListener('input', checkInputs);
+        ytLinkInput.addEventListener('input', checkInputs);
 
-        if (hasTitle && !isSelectedFromDb) {
-            ytGroup.style.display = 'flex';
-        } else {
-            ytGroup.style.display = 'none';
-            ytLinkInput.value = ''; 
-        }
+        // Zapis do Firebase
+        submitBtn.addEventListener('click', async (e) => {
+            isSending = true;
+            if (document.activeElement) document.activeElement.blur();
 
-        if (hasName && hasTitle && (isSelectedFromDb || hasValidYtLink)) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = d.btnReady;
-        } else {
+            const d = dict[curLang];
             submitBtn.disabled = true;
-            if (!hasTitle) { submitBtn.textContent = d.btnMissingTitle; }
-            else if (!isSelectedFromDb && !hasValidYtLink) { submitBtn.textContent = d.btnMissingLink; }
-            else if (!hasName) { submitBtn.textContent = d.btnMissingName; }
-            else { submitBtn.textContent = d.btnDefault; }
-        }
-    }
-    
-    imieInput.addEventListener('input', checkInputs);
-    ytLinkInput.addEventListener('input', checkInputs);
+            submitBtn.textContent = d.btnSending;
 
-    submitBtn.addEventListener('click', async (e) => {
-        isSending = true; 
-        
-        if (document.activeElement) document.activeElement.blur(); 
-
-        const d = dict[curLang];
-        
-        submitBtn.disabled = true;
-        submitBtn.textContent = d.btnSending;
-
-        void submitBtn.offsetHeight; 
-
-            
             let summaryHtml = `${d.sumPerformer} <b>${imieInput.value.trim()}</b><br>${d.sumSong} <b>${szukajInput.value.trim()}</b>`;
             if (ytLinkInput.value.trim()) summaryHtml += `<br>${d.sumYt}`;
             if (kodInput.value.trim()) summaryHtml += `<br>${d.sumCode} ${kodInput.value.trim().toUpperCase()}</i>`;
             successSummary.innerHTML = summaryHtml;
 
             try {
-                await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ 
-                        tytul: szukajInput.value.trim(),
-                        url: ytLinkInput.value.trim(),
-                        imie: imieInput.value.trim(), 
-                        narodowosc: narodowoscInput.value.trim(),
-                        kod: kodInput.value.trim().toUpperCase(),
-                        urodziny: false, 
-                        deviceId: currentDeviceId 
-                    })
+                await db.ref('zamowienia').push({
+                    tytul: szukajInput.value.trim(),
+                    url: ytLinkInput.value.trim(),
+                    imie: imieInput.value.trim(),
+                    narodowosc: narodowoscInput.value.trim(),
+                    kod: kodInput.value.trim().toUpperCase(),
+                    urodziny: false,
+                    deviceId: currentDeviceId,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    zagrane: false
                 });
+
+                await new Promise(resolve => setTimeout(resolve, 500));
 
                 successMsg.style.display = 'block';
                 document.getElementById('formContent').style.display = 'none';
@@ -609,15 +859,12 @@
 
                 const countdown = setInterval(() => {
                     timeLeft--;
-                    if (timeLeft >= 0) {
-                        redirectTimer.textContent = d.redirect.replace('{s}', timeLeft);
-                    }
+                    if (timeLeft >= 0) redirectTimer.textContent = d.redirect.replace('{s}', timeLeft);
                 }, 1000);
-                
-                setTimeout(() => {
-                    clearInterval(countdown); 
-                    isSending = false; 
 
+                setTimeout(() => {
+                    clearInterval(countdown);
+                    isSending = false;
                     successMsg.style.display = 'none';
                     document.getElementById('formContent').style.display = 'flex';
                     szukajInput.value = '';
@@ -625,27 +872,26 @@
                     imieInput.value = '';
                     narodowoscInput.value = '';
                     kodInput.value = '';
-                    
                     isSelectedFromDb = false;
                     checkInputs();
                 }, 8000);
 
             } catch (error) {
-                isSending = false; 
+                isSending = false;
                 submitBtn.innerHTML = d.btnErr;
                 const oldBg = submitBtn.style.backgroundColor;
                 submitBtn.style.backgroundColor = "var(--danger)";
                 submitBtn.style.color = "#fff";
-                setTimeout(() => { 
+                setTimeout(() => {
                     submitBtn.style.backgroundColor = oldBg;
                     submitBtn.style.color = "";
-                    checkInputs(); 
+                    checkInputs();
                 }, 3000);
             }
+        });
 
-    });
-
-    setLanguage('pl');
-</script>
+        setLanguage('pl');
+    </script>
 </body>
+
 </html>

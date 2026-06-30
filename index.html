@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Indeksowe Karaoke</title>
+    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -21,8 +22,6 @@
             --btn-text: #000000;
             --danger: #ff5252;
             --danger-bg: rgba(255, 82, 82, 0.05);
-            --success: #4caf50;
-            --success-bg: rgba(76, 175, 80, 0.05);
             --item-hover: #3a3a3a;
         }
 
@@ -36,8 +35,6 @@
             --primary: #6200ee;
             --primary-hover: #3700b3;
             --btn-text: #ffffff;
-            --success: #388e3c;
-            --success-bg: rgba(56, 142, 60, 0.05);
             --item-hover: #f1f1f1;
         }
 
@@ -410,7 +407,6 @@
             border-radius: 8px;
             border: 1px dashed var(--danger);
             margin-top: 5px;
-            transition: border-color 0.3s, background-color 0.3s;
         }
 
         #searchYTHelper {
@@ -483,7 +479,7 @@
                 <label for="ytLink" style="color: var(--danger); margin-bottom: 5px;" id="lblYtLink">Link do
                     YouTube</label>
                 <small id="dbWarning"
-                    style="color: var(--danger); opacity: 0.8; margin-bottom: 10px; display: block; font-size: 14px; transition: color 0.3s;">Wklej
+                    style="color: var(--danger); opacity: 0.8; margin-bottom: 10px; display: block; font-size: 14px;">Wklej
                     link do wersji Karaoke z YouTube poniżej:</small>
                 <input type="text" id="ytLink" placeholder="Wklej link do wideo..." autocomplete="off"
                     style="width: 100%; border-color: var(--danger); box-sizing: border-box;">
@@ -544,8 +540,8 @@
         });
 
         const dict = {
-            pl: { schedule: "Czwartek (20.00-1.00)<br>Piątek (21.00-2.00)<br>Niedziela (21.00-2.00)", loading: "Pobieranie dostępnej bazy... ⏳", loadingErr: "❌ Brak połączenia z bazą. Wpisz tytuł ręcznie.", successTitle: "✅ Zamówienie wysłane!", successSub: "Zaraz przygotujemy Twój utwór.", lblSzukaj: "Tytuł Piosenki (Wymagane)", plcSzukaj: "Zacznij wpisywać...", ytHelperTitle: "Pobierz link z YouTube", noResults: "⚠️ Brak wyników. Sprawdź literówki!<br><br>Jeśli utworu nie ma w bazie wpisz dokładnie tytuł i wykonawcę, kliknij przycisk <b>YT 🔗</b> obok, a po chwili dostaniesz listę klipów z YouTube do wyboru", dbWarning: "Wklej link do wersji Karaoke z YouTube poniżej:", ytSuccess: "✅ Piosenka z YouTube została wybrana poprawnie.", lblYtLink: "Link do YouTube", plcYtLink: "Wklej link do wideo...", lblImie: "Twoje lub Wasze imiona (Wymagane)", plcImie: "Wpisz imię...", lblNarodowosc: "Narodowość (Opcjonalnie)", plcNarodowosc: "Np. Polska, UK, Spain...", lblKod: "Kod Fast Pass / VIP (Opcjonalnie)", plcKod: "Wpisz 6-znakowy kod", btnDefault: "Wybierz utwór z bazy 🛑", btnMissingTitle: "Wpisz tytuł utworu 🛑", btnMissingLink: "Wybierz z listy lub użyj YT 🔗 🛑", btnMissingName: "Wpisz swoje imię 🛑", btnReady: "Wyślij Zamówienie 🚀", btnSending: "Wysyłanie... ⏳", btnErr: "❌ Błąd, spróbuj ponownie", sumPerformer: "🎤 Wykonawca:", sumSong: "🎵 Utwór:", sumYt: "🔗 <i>Z własnego linku YT</i>", sumCode: "🎟️ <i>Kod VIP:</i>", redirect: "Powrót do formularza za: {s}s", birthdayNotice: "Jeżeli Wasza koleżanka, kolega mają urodziny i chcecie im zaśpiewać 100 lat przyjdźcie i powiedzcie nam to, a zrobimy to razem. 🎉", extraInfo: "<b>INFORMACJA</b> (dotyczy niedzielnego karaoke):<br><br>Drodzy przyjaciele!<br>Do 23:30 możecie śpiewać piosenki popularne tylko w Waszym kraju.<br>Po 23:30 przełączamy się na anglojęzyczne największe hity 🎤<br>Wpisujcie swoje piosenki, które połączą wszystkich<br>i zmienią Klub INDEKS w jedną wielką imprezę!", dismissHelper: "Kliknij obok, aby wrócić ☝️", ytError: "Wystąpił błąd podczas szukania na YT. Sprawdź klucz API.", ytSelectHeader: "Wybierz wersję z YouTube:" },
-            en: { schedule: "Thursday (20.00-1.00)<br>Friday (21.00-2.00)<br>Sunday (21.00-2.00)", loading: "Loading available database... ⏳", loadingErr: "❌ Database connection error. Enter title manually.", successTitle: "✅ Order sent!", successSub: "We will prepare your song shortly.", lblSzukaj: "Song Title (Required)", plcSzukaj: "Start typing...", ytHelperTitle: "Get YouTube link", noResults: "⚠️ No results. Please check for typos!<br><br>If the song is missing, type the exact title and artist, click the <b>YT 🔗</b> button next to it, and shortly you will get a list of YouTube clips to choose from.", dbWarning: "Paste the YouTube Karaoke link below:", ytSuccess: "✅ YouTube song selected correctly.", lblYtLink: "YouTube Link", plcYtLink: "Paste the video link...", lblImie: "Your name(s) (Required)", plcImie: "Enter name...", lblNarodowosc: "Nationality (Required)", plcNarodowosc: "E.g. Poland, UK, Spain...", lblKod: "Fast Pass / VIP Code (Optional)", plcKod: "Enter 6-character code", btnDefault: "Choose a song from the database 🛑", btnMissingTitle: "Enter the song title 🛑", btnMissingLink: "Choose from list or use YT 🔗 🛑", btnMissingName: "Enter your name 🛑", btnReady: "Send Order 🚀", btnSending: "Sending... ⏳", btnErr: "❌ Error, try again", sumPerformer: "🎤 Performer:", sumSong: "🎵 Song:", sumYt: "🔗 <i>From custom YT link</i>", sumCode: "🎟️ <i>VIP Code:</i>", redirect: "Returning to form in: {s}s", birthdayNotice: "If your friend is having a birthday and you want to sing Happy Birthday to them, come and tell us, and we'll do it together. 🎉", extraInfo: "<b>INFORMATION</b> (applies to Sunday karaoke events):<br><br>Dear friends!<br>Until 11.30 PM, you can sing songs popular only in your country.<br>After 11.30 PM, we switch to English-language best hits 🎤<br>Write down your songs that will bring everyone together<br>and turn INDEKS Club into one big party!", dismissHelper: "Click outside to return ☝️", ytError: "Error while searching YT. Check API key.", ytSelectHeader: "Select YouTube version:" }
+            pl: { schedule: "Czwartek (20.00-1.00)<br>Piątek (21.00-2.00)<br>Niedziela (21.00-2.00)", loading: "Pobieranie dostępnej bazy... ⏳", loadingErr: "❌ Brak połączenia z bazą. Wpisz tytuł ręcznie.", successTitle: "✅ Zamówienie wysłane!", successSub: "Zaraz przygotujemy Twój utwór.", lblSzukaj: "Tytuł Piosenki (Wymagane)", plcSzukaj: "Zacznij wpisywać...", ytHelperTitle: "Pobierz link z YouTube", noResults: "⚠️ Brak wyników. Sprawdź literówki!<br><br>Jeśli utworu nie ma w bazie wpisz dokładnie tytuł i wykonawcę, kliknij przycisk <b>YT 🔗</b> obok, a po chwili dostaniesz listę klipów z YouTube do wyboru", dbWarning: "Wklej link do wersji Karaoke z YouTube poniżej:", lblYtLink: "Link do YouTube", plcYtLink: "Wklej link do wideo...", lblImie: "Twoje lub Wasze imiona (Wymagane)", plcImie: "Wpisz imię...", lblNarodowosc: "Narodowość (Opcjonalnie)", plcNarodowosc: "Np. Polska, UK, Spain...", lblKod: "Kod Fast Pass / VIP (Opcjonalnie)", plcKod: "Wpisz 6-znakowy kod", btnDefault: "Wybierz utwór z bazy 🛑", btnMissingTitle: "Wpisz tytuł utworu 🛑", btnMissingLink: "Wybierz z listy lub użyj YT 🔗 🛑", btnMissingName: "Wpisz swoje imię 🛑", btnReady: "Wyślij Zamówienie 🚀", btnSending: "Wysyłanie... ⏳", btnErr: "❌ Błąd, spróbuj ponownie", sumPerformer: "🎤 Wykonawca:", sumSong: "🎵 Utwór:", sumYt: "🔗 <i>Z własnego linku YT</i>", sumCode: "🎟️ <i>Kod VIP:</i>", redirect: "Powrót do formularza za: {s}s", birthdayNotice: "Jeżeli Wasza koleżanka, kolega mają urodziny i chcecie im zaśpiewać 100 lat przyjdźcie i powiedzcie nam to, a zrobimy to razem. 🎉", extraInfo: "<b>INFORMACJA</b> (dotyczy niedzielnego karaoke):<br><br>Drodzy przyjaciele!<br>Do 23:30 możecie śpiewać piosenki popularne tylko w Waszym kraju.<br>Po 23:30 przełączamy się na anglojęzyczne największe hity 🎤<br>Wpisujcie swoje piosenki, które połączą wszystkich<br>i zmienią Klub INDEKS w jedną wielką imprezę!", dismissHelper: "Kliknij obok, aby wrócić ☝️", ytError: "Wystąpił błąd podczas szukania na YT. Sprawdź klucz API.", ytSelectHeader: "Wybierz wersję z YouTube:" },
+            en: { schedule: "Thursday (20.00-1.00)<br>Friday (21.00-2.00)<br>Sunday (21.00-2.00)", loading: "Loading available database... ⏳", loadingErr: "❌ Database connection error. Enter title manually.", successTitle: "✅ Order sent!", successSub: "We will prepare your song shortly.", lblSzukaj: "Song Title (Required)", plcSzukaj: "Start typing...", ytHelperTitle: "Get YouTube link", noResults: "⚠️ No results. Please check for typos!<br><br>If the song is missing, type the exact title and artist, click the <b>YT 🔗</b> button next to it, and shortly you will get a list of YouTube clips to choose from.", dbWarning: "Paste the YouTube Karaoke link below:", lblYtLink: "YouTube Link", plcYtLink: "Paste the video link...", lblImie: "Your name(s) (Required)", plcImie: "Enter name...", lblNarodowosc: "Nationality (Required)", plcNarodowosc: "E.g. Poland, UK, Spain...", lblKod: "Fast Pass / VIP Code (Optional)", plcKod: "Enter 6-character code", btnDefault: "Choose a song from the database 🛑", btnMissingTitle: "Enter the song title 🛑", btnMissingLink: "Choose from list or use YT 🔗 🛑", btnMissingName: "Enter your name 🛑", btnReady: "Send Order 🚀", btnSending: "Sending... ⏳", btnErr: "❌ Error, try again", sumPerformer: "🎤 Performer:", sumSong: "🎵 Song:", sumYt: "🔗 <i>From custom YT link</i>", sumCode: "🎟️ <i>VIP Code:</i>", redirect: "Returning to form in: {s}s", birthdayNotice: "If your friend is having a birthday and you want to sing Happy Birthday to them, come and tell us, and we'll do it together. 🎉", extraInfo: "<b>INFORMATION</b> (applies to Sunday karaoke events):<br><br>Dear friends!<br>Until 11.30 PM, you can sing songs popular only in your country.<br>After 11.30 PM, we switch to English-language best hits 🎤<br>Write down your songs that will bring everyone together<br>and turn INDEKS Club into one big party!", dismissHelper: "Click outside to return ☝️", ytError: "Error while searching YT. Check API key.", ytSelectHeader: "Select YouTube version:" }
         };
 
         let curLang = 'pl';
@@ -564,6 +560,7 @@
             document.getElementById('lblSzukaj').textContent = d.lblSzukaj;
             document.getElementById('szukaj').placeholder = d.plcSzukaj;
             document.getElementById('searchYTHelper').title = d.ytHelperTitle;
+            document.getElementById('dbWarning').textContent = d.dbWarning;
             document.getElementById('lblYtLink').textContent = d.lblYtLink;
             document.getElementById('ytLink').placeholder = d.plcYtLink;
             document.getElementById('lblImie').textContent = d.lblImie;
@@ -578,8 +575,7 @@
 
             if (suggestionsBox.querySelector('.no-results')) { suggestionsBox.querySelector('.no-results').innerHTML = d.noResults; }
             if (suggestionsBox.querySelector('.yt-header')) { suggestionsBox.querySelector('.yt-header').innerHTML = d.ytSelectHeader; }
-            
-            checkInputs(); // Wymusza odświeżenie tekstów (m.in dla zielonego/czerwonego powiadomienia YT)
+            checkInputs();
         }
 
         let baza = [];
@@ -808,35 +804,8 @@
             const ytLinkVal = ytLinkInput.value.trim();
             const hasValidYtLink = ytLinkVal.length > 0 && (ytLinkVal.includes('youtube.com') || ytLinkVal.includes('youtu.be'));
 
-            if (hasTitle && !isSelectedFromDb) { 
-                ytGroup.style.display = 'flex'; 
-                
-                // --- NOWA LOGIKA: Dynamiczne style (Zielony vs Czerwony) ---
-                const lblYtLink = document.getElementById('lblYtLink');
-                const dbWarning = document.getElementById('dbWarning');
-
-                if (hasValidYtLink) {
-                    // Sukces - Zielone
-                    ytGroup.style.borderColor = "var(--success)";
-                    ytGroup.style.backgroundColor = "var(--success-bg)";
-                    lblYtLink.style.color = "var(--success)";
-                    dbWarning.style.color = "var(--success)";
-                    dbWarning.textContent = d.ytSuccess;
-                    ytLinkInput.style.borderColor = "var(--success)";
-                } else {
-                    // Ostrzeżenie - Czerwone
-                    ytGroup.style.borderColor = "var(--danger)";
-                    ytGroup.style.backgroundColor = "var(--danger-bg)";
-                    lblYtLink.style.color = "var(--danger)";
-                    dbWarning.style.color = "var(--danger)";
-                    dbWarning.textContent = d.dbWarning;
-                    ytLinkInput.style.borderColor = "var(--danger)";
-                }
-            }
-            else { 
-                ytGroup.style.display = 'none'; 
-                ytLinkInput.value = ''; 
-            }
+            if (hasTitle && !isSelectedFromDb) { ytGroup.style.display = 'flex'; }
+            else { ytGroup.style.display = 'none'; ytLinkInput.value = ''; }
 
             if (hasName && hasTitle && (isSelectedFromDb || hasValidYtLink)) {
                 submitBtn.disabled = false;
@@ -904,6 +873,11 @@
                     narodowoscInput.value = '';
                     kodInput.value = '';
                     isSelectedFromDb = false;
+                    
+                    // --- ZMIANA: Ukrywamy elementy ręcznie na etapie resetowania ---
+                    searchYTHelper.style.display = 'none';
+                    suggestionsBox.style.display = 'none'; 
+                    
                     checkInputs();
                 }, 8000);
 

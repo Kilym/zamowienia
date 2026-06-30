@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Indeksowe Karaoke</title>
-    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -400,6 +399,7 @@
             width: 100%;
         }
 
+        /* ZMIANA: Przeniesienie domyślnych, czerwonych stylów sekcji YT do CSS */
         #ytGroup {
             display: none;
             background: var(--danger-bg);
@@ -407,6 +407,33 @@
             border-radius: 8px;
             border: 1px dashed var(--danger);
             margin-top: 5px;
+            transition: all 0.3s ease;
+        }
+
+        #ytGroup label,
+        #ytGroup small {
+            color: var(--danger);
+            transition: color 0.3s ease;
+        }
+
+        #ytGroup input {
+            border-color: var(--danger);
+            transition: border-color 0.3s ease;
+        }
+
+        /* ZMIANA: Klasa dodawana dynamicznie, gdy link YT jest poprawny */
+        #ytGroup.valid-yt {
+            background: rgba(76, 175, 80, 0.05);
+            border-color: #4CAF50;
+        }
+
+        #ytGroup.valid-yt label,
+        #ytGroup.valid-yt small {
+            color: #4CAF50;
+        }
+
+        #ytGroup.valid-yt input {
+            border-color: #4CAF50;
         }
 
         #searchYTHelper {
@@ -476,13 +503,12 @@
             </div>
 
             <div class="input-group hide-in-search" id="ytGroup">
-                <label for="ytLink" style="color: var(--danger); margin-bottom: 5px;" id="lblYtLink">Link do
-                    YouTube</label>
+                <label for="ytLink" style="margin-bottom: 5px;" id="lblYtLink">Link do YouTube</label>
                 <small id="dbWarning"
-                    style="color: var(--danger); opacity: 0.8; margin-bottom: 10px; display: block; font-size: 14px;">Wklej
+                    style="opacity: 0.8; margin-bottom: 10px; display: block; font-size: 14px;">Wklej
                     link do wersji Karaoke z YouTube poniżej:</small>
                 <input type="text" id="ytLink" placeholder="Wklej link do wideo..." autocomplete="off"
-                    style="width: 100%; border-color: var(--danger); box-sizing: border-box;">
+                    style="width: 100%; box-sizing: border-box;">
             </div>
 
             <div class="input-group hide-in-search">
@@ -804,8 +830,15 @@
             const ytLinkVal = ytLinkInput.value.trim();
             const hasValidYtLink = ytLinkVal.length > 0 && (ytLinkVal.includes('youtube.com') || ytLinkVal.includes('youtu.be'));
 
+            // ZMIANA: Przełączanie klasy valid-yt (zielony kolor) jeśli link jest poprawny
+            if (hasValidYtLink) {
+                ytGroup.classList.add('valid-yt');
+            } else {
+                ytGroup.classList.remove('valid-yt');
+            }
+
             if (hasTitle && !isSelectedFromDb) { ytGroup.style.display = 'flex'; }
-            else { ytGroup.style.display = 'none'; ytLinkInput.value = ''; }
+            else { ytGroup.style.display = 'none'; ytLinkInput.value = ''; ytGroup.classList.remove('valid-yt'); }
 
             if (hasName && hasTitle && (isSelectedFromDb || hasValidYtLink)) {
                 submitBtn.disabled = false;
@@ -873,11 +906,12 @@
                     narodowoscInput.value = '';
                     kodInput.value = '';
                     isSelectedFromDb = false;
-                    
-                    // --- ZMIANA: Ukrywamy elementy ręcznie na etapie resetowania ---
+
+                    // Ukrywamy elementy ręcznie na etapie resetowania
                     searchYTHelper.style.display = 'none';
-                    suggestionsBox.style.display = 'none'; 
-                    
+                    suggestionsBox.style.display = 'none';
+                    ytGroup.classList.remove('valid-yt');
+
                     checkInputs();
                 }, 8000);
 
